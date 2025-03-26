@@ -2,120 +2,138 @@ import { NextResponse } from "next/server";
 import clientPromise from "@/lib/mongodb";
 
 export async function POST(request) {
-  try {
-    // Destructure the request body
-    const {
-      itemId,
-      name,
-      price,
-      description,
-      image,
-      contentType,
-      additionalImages,
-      category,
-      type,
-      sizes, // Array of objects: { size: string, stock: number }
-    } = await request.json();
-console.log("step-1")
-    // Validate required fields
-    if (
-      !itemId ||
-      !name ||
-      !price ||
-      !description ||
-      !image ||
-      !contentType ||
-      !category ||
-      !type ||
-      !sizes
-    ) {
-      return NextResponse.json(
-        { error: "All fields are required, including category, type, sizes, and colors." },
-        { status: 400 }
-      );
-    }
-    console.log("step-2")
+    try {
+        // Parse the request body
+        const body = await request.json();
 
-    // Ensure additionalImages is an array (optional)
-    const formattedAdditionalImages = Array.isArray(additionalImages)
-      ? additionalImages
-      : [];
+        console.log("Step-1: Received request data.");
 
-    // Validate category (ensure it's a string and not empty)
-    if (typeof category !== "string" || category.trim() === "") {
-      return NextResponse.json(
-        { error: "Category must be a valid string." },
-        { status: 400 }
-      );
-    }
+        // Validate required fields
+        const requiredFields = [
+            "itemId", "name", "price", "description", "image",
+            "contentType", "category", "type", "sizes"
+        ];
 
-    // Validate type (ensure it's a string and not empty)
-    if (typeof type !== "string" || type.trim() === "") {
-      return NextResponse.json(
-        { error: "Type must be a valid string." },
-        { status: 400 }
-      );
-    }
-    console.log("step-3")
+        for (const field of requiredFields) {
+            if (!body[field]) {
+                return NextResponse.json(
+                    { error: `${field} is required.` },
+                    { status: 400 }
+                );
+            }
+        }
 
-    // Validate sizes (ensure it's an array and not empty)
-    if (!Array.isArray(sizes) || sizes.length === 0) {
-      return NextResponse.json(
-        { error: "Sizes must be a non-empty array." },
-        { status: 400 }
-      );
-    }
+        console.log("Step-2: Required fields validated.");
 
-    // Validate each size object in the sizes array
-    for (const sizeObj of sizes) {
-      if (
-        typeof sizeObj.size !== "string" ||
-        sizeObj.size.trim() === "" ||
-        typeof sizeObj.stock !== "number" ||
-        sizeObj.stock <= 0
-      ) {
+        // Validate 'price' as a number
+        const price = Number(body.price);
+        if (isNaN(price) || price <= 0) {
+            return NextResponse.json(
+                { error: "Price must be a valid positive number." },
+                { status: 400 }
+            );
+        }
+
+        // Ensure additionalImages is an array (optional)
+        const additionalImages = Array.isArray(body.additionalImages)
+            ? body.additionalImages
+            : [];
+
+        // Validate category and type
+        if (typeof body.category !== "string" || body.category.trim() === "") {
+            return NextResponse.json(
+                { error: "Category must be a non-empty string." },
+                { status: 400 }
+            );
+        }
+
+        if (typeof body.type !== "string" || body.type.trim() === "") {
+            return NextResponse.json(
+                { error: "Type must be a non-empty string." },
+                { status: 400 }
+            );
+        }
+
+        console.log("Step-3: Category and type validated.");
+
+        // Validate sizes array
+        if (!Array.isArray(body.sizes) || body.sizes.length === 0) {
+            return NextResponse.json(
+                { error: "Sizes must be a non-empty array." },
+                { status: 400 }
+            );
+        }
+
+        // Validate each size object in the sizes array
+        for (const sizeObj of body.sizes) {
+            if (
+                typeof sizeObj.size !== "string" ||
+                sizeObj.size.trim() === "" ||
+                typeof sizeObj.stock !== "number" ||
+                sizeObj.stock < 0
+            ) {
+                return NextResponse.json(
+                    { error: "Each size object must have a valid size (string) and stock (number >= 0)." },
+                    { status: 400 }
+                );
+            }
+        }
+
+        console.log("Step-4: Sizes validated.");
+
+        // Connect to MongoDB
+        let client;
+        try {
+            client = await clientPromise;
+            if (!client) throw new Error("MongoDB client is undefined.");
+        } catch (dbConnectError) {
+            console.error("MongoDB Connection Error:", dbConnectError);
+            return NextResponse.json(
+                { error: "Database connection failed." },
+                { status: 500 }
+            );
+        }
+
+        const db = client.db("xatun");
+        const collection = db.collection("products");
+
+        console.log("Step-5: Connected to MongoDB.");
+
+        // Insert product into MongoDB
+        try {
+            const result = await collection.insertOne({
+                itemId: body.itemId,
+                name: body.name,
+                price: price,
+                description: body.description,
+                image: body.image,
+                contentType: body.contentType,
+                additionalImages: additionalImages,
+                category: body.category,
+                type: body.type,
+                sizes: body.sizes,
+                uploadedAt: new Date(),
+            });
+
+            console.log("Step-6: Product inserted successfully.");
+            return NextResponse.json({
+                message: "Product uploaded successfully!",
+                insertedId: result.insertedId,
+            });
+
+        } catch (dbInsertError) {
+            console.error("Database Insert Error:", dbInsertError);
+            return NextResponse.json(
+                { error: "Failed to insert product into the database." },
+                { status: 500 }
+            );
+        }
+
+    } catch (unexpectedError) {
+        console.error("Unexpected Error:", unexpectedError);
         return NextResponse.json(
-          { error: "Each size object must have a valid size (string) and stock (number greater than 0)." },
-          { status: 400 }
+            { error: "An unexpected error occurred. Please try again later." },
+            { status: 500 }
         );
-      }
     }
-    console.log("step-4")
-
-    // Validate colors (ensure it's an array and not empty)
-   
-
-    // Connect to MongoDB
-    const client = await clientPromise;
-    const db = client.db("xatun");
-    const collection = db.collection("products");
-    console.log("step-5")
-
-    // Insert the product into MongoDB
-    const result = await collection.insertOne({
-      itemId,
-      name,
-      price,
-      description,
-      image, // Main image (Base64)
-      contentType,
-      additionalImages: formattedAdditionalImages, // Store extra images
-      category, // Include the selected category
-      type, // Include the selected type
-      sizes, // Include sizes with stock
-      uploadedAt: new Date(),
-    });
-    console.log("step-6")
-
-    return NextResponse.json({
-      message: "Product uploaded successfully!",
-      insertedId: result.insertedId,
-    });
-  } catch (error) {
-    console.error("Error uploading product:", error);
-    return NextResponse.json(
-      { error: "Failed to upload product." },
-      { status: 500 }
-    );
-  }
 }
