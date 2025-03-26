@@ -16,7 +16,7 @@ export async function POST(request) {
       type,
       sizes, // Array of objects: { size: string, stock: number }
     } = await request.json();
-
+console.log("step-1")
     // Validate required fields
     if (
       !itemId ||
@@ -34,6 +34,7 @@ export async function POST(request) {
         { status: 400 }
       );
     }
+    console.log("step-2")
 
     // Ensure additionalImages is an array (optional)
     const formattedAdditionalImages = Array.isArray(additionalImages)
@@ -55,6 +56,7 @@ export async function POST(request) {
         { status: 400 }
       );
     }
+    console.log("step-3")
 
     // Validate sizes (ensure it's an array and not empty)
     if (!Array.isArray(sizes) || sizes.length === 0) {
@@ -78,6 +80,7 @@ export async function POST(request) {
         );
       }
     }
+    console.log("step-4")
 
     // Validate colors (ensure it's an array and not empty)
    
@@ -86,6 +89,7 @@ export async function POST(request) {
     const client = await clientPromise;
     const db = client.db("xatun");
     const collection = db.collection("products");
+    console.log("step-5")
 
     // Insert the product into MongoDB
     const result = await collection.insertOne({
@@ -101,6 +105,7 @@ export async function POST(request) {
       sizes, // Include sizes with stock
       uploadedAt: new Date(),
     });
+    console.log("step-6")
 
     return NextResponse.json({
       message: "Product uploaded successfully!",
