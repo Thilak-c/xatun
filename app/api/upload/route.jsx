@@ -1,9 +1,7 @@
 import { NextResponse } from "next/server";
 import { MongoClient } from 'mongodb';
 
-// MongoDB connection setup with caching
-const uri = process.env.MONGODB_URI || "mongodb://localhost:27017";
-
+// Cached connection
 let cachedClient = null;
 let cachedDb = null;
 
@@ -11,6 +9,9 @@ async function connectToDatabase() {
   if (cachedClient && cachedDb) {
     return { client: cachedClient, db: cachedDb };
   }
+
+  // Use environment variable or fallback to local
+  const uri = process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/xatun";
 
   const client = new MongoClient(uri, {
     connectTimeoutMS: 5000,
@@ -23,7 +24,8 @@ async function connectToDatabase() {
 
   try {
     await client.connect();
-    const db = client.db("xatun");
+    const dbName = new URL(uri).pathname.substring(1) || 'xatun';
+    const db = client.db(dbName);
     
     cachedClient = client;
     cachedDb = db;
@@ -31,10 +33,9 @@ async function connectToDatabase() {
     return { client, db };
   } catch (error) {
     console.error("MongoDB connection error:", error);
-    throw error;
+    throw new Error(`Failed to connect to MongoDB: ${error.message}`);
   }
 }
-
 // Retry mechanism for database operations
 async function withRetry(fn, operationName, retries = 3, delay = 1000) {
   try {
