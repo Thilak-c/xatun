@@ -1,7 +1,12 @@
 import { NextResponse } from "next/server";
-import clientPromise from "@/lib/mongodb";
+import { MongoClient } from 'mongodb';
+
+// MongoDB connection URI - you should store this in environment variables
+const uri = process.env.MONGODB_URI || "mongodb://localhost:27017";
 
 export async function POST(request) {
+    let client;
+    
     try {
         // Parse the request body
         const body = await request.json();
@@ -82,25 +87,15 @@ export async function POST(request) {
         console.log("Step-4: Sizes validated.");
 
         // Connect to MongoDB
-        let client;
         try {
-            client = await clientPromise;
-            if (!client) throw new Error("MongoDB client is undefined.");
-        } catch (dbConnectError) {
-            console.error("MongoDB Connection Error:", dbConnectError);
-            return NextResponse.json(
-                { error: "Database connection failed." },
-                { status: 500 }
-            );
-        }
+            client = new MongoClient(uri);
+            await client.connect();
+            console.log("Step-5: Connected to MongoDB.");
 
-        const db = client.db("xatun");
-        const collection = db.collection("products");
+            const db = client.db("xatun");
+            const collection = db.collection("products");
 
-        console.log("Step-5: Connected to MongoDB.");
-
-        // Insert product into MongoDB
-        try {
+            // Insert product into MongoDB
             const result = await collection.insertOne({
                 itemId: body.itemId,
                 name: body.name,
@@ -121,10 +116,10 @@ export async function POST(request) {
                 insertedId: result.insertedId,
             });
 
-        } catch (dbInsertError) {
-            console.error("Database Insert Error:", dbInsertError);
+        } catch (dbError) {
+            console.error("Database Error:", dbError);
             return NextResponse.json(
-                { error: "Failed to insert product into the database." },
+                { error: "Database operation failed." },
                 { status: 500 }
             );
         }
@@ -135,5 +130,10 @@ export async function POST(request) {
             { error: "An unexpected error occurred. Please try again later." },
             { status: 500 }
         );
+    } finally {
+        // Ensure the client is closed after the operation
+        if (client) {
+            await client.close();
+        }
     }
 }
