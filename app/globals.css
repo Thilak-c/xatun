@@ -1,0 +1,53 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+.main-ha {
+  background-image: radial-gradient(circle, #fff  2%, transparent 1%);
+  background-size: 30px 30px;
+  
+  /* Adjust the size of the dots */
+}
+
+body {
+  color: var(--foreground);
+  background: var(--background);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+@layer utilities {
+
+  /* Customize scrollbar for webkit browsers (Chrome, Safari) */
+  ::-webkit-scrollbar {
+    width: 5px;
+    height: 0px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: #1e1e1e;
+    /* Dark background */
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #1e3a8a ;
+    /* Scrollbar color */
+    border-radius: 4px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: #357ae8;
+    /* Hover color */
+  }
+}
