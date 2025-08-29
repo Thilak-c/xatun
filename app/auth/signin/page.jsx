@@ -66,6 +66,9 @@ export default function SignInPage() {
           </button>
         </form>
       </div>
+
+      {/* Toast Container */}
+      <div id="toast-container" />
     </div>
   );
 }

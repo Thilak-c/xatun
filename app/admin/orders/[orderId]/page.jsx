@@ -136,7 +136,7 @@ export default function OrderDetailsPage() {
               <h2 className="text-xl font-semibold mb-4">Product Details</h2>
               <div className="flex items-start gap-6">
                 <img
-                  src={getMainImageUrl(order)}
+                  src={order.itemImage}
                   alt={order.productName}
                   className="w-32 h-32 rounded-lg object-cover"
                 />

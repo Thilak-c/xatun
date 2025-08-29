@@ -116,6 +116,9 @@ export default function CategoryPage() {
           </section>
         ))}
       </div>
+
+      {/* Toast Container */}
+      <div id="toast-container" />
     </div>
   );
 }

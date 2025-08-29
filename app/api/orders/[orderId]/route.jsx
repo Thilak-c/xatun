@@ -1,53 +1,47 @@
-import { MongoClient } from 'mongodb';
+import clientPromise from "@/lib/mongodb";
 
 export async function GET(request, { params }) {
-  const { orderId } = params;
-  const uri = "mongodb://localhost:27017/xatun";
-  const client = new MongoClient(uri);
+  const { orderId } = await params;
 
   try {
-    await client.connect();
-    const database = client.db('xatun'); // Replace with your database name
+    const client = await clientPromise;
+    const database = client.db('xatun');
     const ordersCollection = database.collection('orders');
 
     // Find the order by orderId
-    const order = await ordersCollection.findOne({ orderId });
-    console.log(order)
+    const order = await ordersCollection.findOne({ orderId: orderId });
+    
     if (!order) {
       return Response.json({ error: 'Order not found' }, { status: 404 });
     }
-    // console.log(order)
-    // Return the messages array (default to empty array if messages don't exist)
-    return Response.json(order || []);
+
+    // Return the complete order data
+    return Response.json(order);
   } catch (error) {
-    console.error('Error fetching messages:', error);
-    return Response.json({ error: 'Failed to fetch messages' }, { status: 500 });
-  } finally {
-    await client.close();
+    console.error('Error fetching order:', error);
+    return Response.json({ error: 'Failed to fetch order' }, { status: 500 });
   }
 }
 
 export async function POST(request, { params }) {
   const { orderId } = params;
   const { content } = await request.json();
-  const uri ="mongodb://localhost:27017/xatun";
-  const client = new MongoClient(uri);
 
   try {
-    await client.connect();
-    const database = client.db('xatun'); // Replace with your database name
+    const client = await clientPromise;
+    const database = client.db('xatun');
     const ordersCollection = database.collection('orders');
 
     // Create a new message object
     const newMessage = {
       content,
       timestamp: new Date().toISOString(),
-      sender: 'admin', // You can change this to 'user' if needed
+      sender: 'admin',
     };
 
     // Update the order with the new message
     const result = await ordersCollection.updateOne(
-      { orderId },
+      { orderId: orderId },
       { $push: { messages: newMessage } }
     );
 
@@ -59,7 +53,5 @@ export async function POST(request, { params }) {
   } catch (error) {
     console.error('Error adding message:', error);
     return Response.json({ error: 'Failed to add message' }, { status: 500 });
-  } finally {
-    await client.close();
   }
 }

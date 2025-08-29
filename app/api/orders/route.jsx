@@ -1,12 +1,9 @@
-import { MongoClient } from 'mongodb';
+import clientPromise from "@/lib/mongodb";
 
 // Fetch all orders
 export async function GET() {
-  const uri = "mongodb://localhost:27017/xatun";
-  const client = new MongoClient(uri);
-
   try {
-    await client.connect();
+    const client = await clientPromise;
     const database = client.db('xatun');
     const ordersCollection = database.collection('orders');
 
@@ -17,19 +14,14 @@ export async function GET() {
   } catch (error) {
     console.error('Error fetching orders:', error);
     return Response.json({ error: 'Failed to fetch orders' }, { status: 500 });
-  } finally {
-    await client.close();
   }
 }
 
 // Update order status
 export async function PUT(request) {
-  const { orderId, status } = await request.json();
-  const uri = "mongodb://localhost:27017/xatun";
-  const client = new MongoClient(uri);
-
   try {
-    await client.connect();
+    const { orderId, status } = await request.json();
+    const client = await clientPromise;
     const database = client.db('xatun');
     const ordersCollection = database.collection('orders');
 
@@ -47,57 +39,63 @@ export async function PUT(request) {
   } catch (error) {
     console.error('Error updating order:', error);
     return Response.json({ error: 'Failed to update order' }, { status: 500 });
-  } finally {
-    await client.close();
   }
 }
 
 export async function POST(request) {
-  const {
-    productName,
-    amount,
-    paymentId,
-    itemId,
-    itemImage,
-    address, // Include address
-    size
-  } = await request.json();
-
-  const uri = "mongodb://localhost:27017/xatun";
-  const client = new MongoClient(uri);
-
   try {
-    await client.connect();
-    const database = client.db('xatun');
-    const ordersCollection = database.collection('orders');
-
-    console.log(productName,
+    const {
+      productName,
       amount,
       paymentId,
       itemId,
-      itemImage,)
-    // Create order object
+      orderId, // This comes from Razorpay
+      itemImage,
+      address,
+      size,
+      quantity,
+      color
+    } = await request.json();
+
+    const client = await clientPromise;
+    const database = client.db('xatun');
+    const ordersCollection = database.collection('orders');
+
+    // Create order object with all the data from checkout
     const order = {
-      orderId: `ORD-${Date.now()}`, // Generate a unique order ID
+      orderId: orderId, // Use the Razorpay order ID
       productName,
       size,
+      quantity: quantity || 1,
+      color: color || 'N/A',
       amount,
       paymentId,
       itemId,
       itemImage,
-      address, // Include address
-      status: 'pending', // Default status
+      address,
+      status: 'pending',
       createdAt: new Date().toISOString(),
+      messages: [] // Initialize empty messages array
     };
 
     // Insert order into MongoDB
     const result = await ordersCollection.insertOne(order);
-    console.log("Done")
-    return Response.json({ success: true, orderId: order.orderId });
+    
+    if (result.acknowledged) {
+      return Response.json({ 
+        success: true, 
+        orderId: order.orderId,
+        message: 'Order created successfully' 
+      });
+    } else {
+      throw new Error('Failed to insert order into database');
+    }
   } catch (error) {
     console.error('Error creating order:', error);
-    return Response.json({ success: false, error: 'Failed to create order' }, { status: 500 });
-  } finally {
-    await client.close();
+    return Response.json({ 
+      success: false, 
+      error: 'Failed to create order',
+      details: error.message 
+    }, { status: 500 });
   }
 }

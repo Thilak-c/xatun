@@ -27,7 +27,7 @@ const Footer = () => {
                 whileHover={{ scale: 1.1, rotate: 10 }}
                 transition={{ type: "spring", stiffness: 300 }}
               />
-              <h2 className="text-white text-3xl font-extrabold tracking-wider">XATUN</h2>
+              <h2 className="text-3xl font-extrabold tracking-wider text-foreground">XATUN</h2>
             </div>
             <p className="mt-4 text-gray-400 text-sm leading-relaxed">
               Elevating your style with premium apparel. Designed for the bold and fearless.
@@ -36,7 +36,7 @@ const Footer = () => {
 
           {/* Quick Links */}
           <div>
-            <h3 className="text-white text-lg font-semibold pb-2 border-b border-gray-700 w-fit">Quick Links</h3>
+            <h3 className="text-foreground text-lg font-semibold pb-2 border-b border-border w-fit">Quick Links</h3>
             <ul className="mt-4 space-y-3 text-gray-400 text-sm">
               {[
                 { name: "Home", link: "/" },
@@ -44,8 +44,8 @@ const Footer = () => {
                 { name: "Men", link: "/men" },
                 { name: "Contact", link: "/contact" }
               ].map((item) => (
-                <motion.li key={item.name} whileHover={{ x: 5, color: "#fff" }} transition={{ duration: 0.3 }}>
-                  <a href={item.link} className="hover:text-white transition-all duration-300">{item.name}</a>
+                <motion.li key={item.name} whileHover={{ x: 5, color: "var(--foreground)" }} transition={{ duration: 0.3 }}>
+                  <a href={item.link} className="hover:text-foreground transition-all duration-300">{item.name}</a>
                 </motion.li>
               ))}
             </ul>
@@ -53,7 +53,7 @@ const Footer = () => {
 
           {/* Customer Service */}
           <div>
-            <h3 className="text-white text-lg font-semibold pb-2 border-b border-gray-700 w-fit">Customer Service</h3>
+            <h3 className="text-foreground text-lg font-semibold pb-2 border-b border-border w-fit">Customer Service</h3>
             <ul className="mt-4 space-y-3 text-gray-400 text-sm">
               {[
                 { name: "FAQs", link: "/faqs" },
@@ -61,8 +61,8 @@ const Footer = () => {
                 { name: "Privacy Policy", link: "/privacy-policy" },
                 { name: "Terms & Conditions", link: "/terms" }
               ].map((item) => (
-                <motion.li key={item.name} whileHover={{ x: 5, color: "#fff" }} transition={{ duration: 0.3 }}>
-                  <a href={item.link} className="hover:text-white transition-all duration-300">{item.name}</a>
+                <motion.li key={item.name} whileHover={{ x: 5, color: "var(--foreground)" }} transition={{ duration: 0.3 }}>
+                  <a href={item.link} className="hover:text-foreground transition-all duration-300">{item.name}</a>
                 </motion.li>
               ))}
             </ul>
@@ -70,7 +70,7 @@ const Footer = () => {
 
           {/* Social Media */}   
           <div>
-            <h3 className="text-white text-lg font-semibold pb-2 border-b border-gray-700 w-fit">Follow Us</h3>
+            <h3 className="text-foreground text-lg font-semibold pb-2 border-b border-border w-fit">Follow Us</h3>
             <div className="mt-4 flex space-x-5">
               {[
                 // { icon: <FaFacebookF />, link: "https://facebook.com/XATUN" },
@@ -101,7 +101,7 @@ const Footer = () => {
 
       {/* Google Map Section */}
       <div className="relative z-10 mt-16">
-        <h3 className="text-center text-white text-2xl font-semibold">Find Us Here</h3>
+        <h3 className="text-center text-foreground text-2xl font-semibold">Find Us Here</h3>
         <div className="mt-6 w-full flex justify-center">
           <motion.div 
             className="w-full md:w-3/4 lg:w-2/3 h-72 overflow-hidden rounded-lg shadow-lg border-4 border-gray-700"
