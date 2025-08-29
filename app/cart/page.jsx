@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { getMainImageUrl } from "@/lib/imageUtils";
 
 export default function CartPage() {
   const [cart, setCart] = useState([]);
@@ -23,13 +24,33 @@ export default function CartPage() {
   useEffect(() => {
     if (typeof window !== "undefined") {
       const savedCart = JSON.parse(localStorage.getItem("cart")) || [];
+      console.log("Loading cart from localStorage:", savedCart);
       setCart(savedCart);
     }
   }, []);
 
+  // Listen for storage changes from other components
+  useEffect(() => {
+    const handleStorageChange = (e) => {
+      if (e.key === "cart") {
+        console.log("Cart changed in localStorage:", e.newValue);
+        try {
+          const newCart = JSON.parse(e.newValue || "[]");
+          setCart(newCart);
+        } catch (error) {
+          console.error("Error parsing cart from storage:", error);
+        }
+      }
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+    return () => window.removeEventListener("storage", handleStorageChange);
+  }, []);
+
   // Update local storage whenever the cart changes
   useEffect(() => {
-    if (typeof window !== "undefined") {
+    if (typeof window !== "undefined" && cart.length > 0) {
+      console.log("Saving cart to localStorage:", cart);
       localStorage.setItem("cart", JSON.stringify(cart));
     }
   }, [cart]);
@@ -39,21 +60,24 @@ export default function CartPage() {
 
   // Remove an item from the cart
   const removeFromCart = (productId) => {
-    const updatedCart = cart.filter((item) => item._id !== productId);
+    const updatedCart = cart.filter((item) => item.itemId !== productId);
     setCart(updatedCart);
   };
 
   // Update item quantity
   const updateQuantity = (productId, newQuantity) => {
     const updatedCart = cart.map((item) =>
-      item._id === productId ? { ...item, quantity: Math.max(1, newQuantity) } : item
+      item.itemId === productId ? { ...item, quantity: Math.max(1, newQuantity) } : item
     );
     setCart(updatedCart);
   };
 
   // Clear the entire cart
   const clearCart = () => {
-    setCart([]);
+   
+      setCart([]);
+      localStorage.removeItem("cart");
+    
   };
 
   // Handle checkout with Razorpay
@@ -69,7 +93,7 @@ export default function CartPage() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          amount: totalPrice * 100, // Convert to paise (INR)
+          amount: (totalPrice), // Convert to paise (INR)
           currency: "INR",
           receipt: `receipt_${Date.now()}`, // Unique receipt ID
         }),
@@ -86,7 +110,7 @@ export default function CartPage() {
         key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
         amount: order.amount, // Amount in paise
         currency: order.currency,
-        name: "Your Company Name",
+        name: "Xatun Streetwear",
         description: "Purchase Description",
         image: "/favicon.ico", // URL of your company logo
         order_id: order.id,
@@ -99,6 +123,8 @@ export default function CartPage() {
 
           // Loop through each product in the cart and post data one by one
           try {
+            let allOrdersSuccessful = true;
+            
             for (const item of cart) {
               const orderResponse = await fetch("/api/orders", {
                 method: "POST",
@@ -113,10 +139,17 @@ export default function CartPage() {
                   itemImage: item.image, // Ensure this is a valid base64 string or URL
                   paymentId: response.razorpay_payment_id,
                   address, // Ensure this is a valid object
+                  size: item.size,
                 }),
               });
 
               const orderData = await orderResponse.json();
+              
+              if (!orderData.success) {
+                allOrdersSuccessful = false;
+                console.error("Order creation failed for item:", item.name);
+                break;
+              }
 
               // Save order ID to localStorage
               const userOrders = JSON.parse(localStorage.getItem("userOrders")) || [];
@@ -124,10 +157,13 @@ export default function CartPage() {
               localStorage.setItem("userOrders", JSON.stringify(userOrders));
             }
 
-            // Clear the cart after successful payment
-            clearCart();
-
-            router.push("/my-orders");
+            if (allOrdersSuccessful) {
+              // Clear the cart only after successful order creation
+              clearCart();
+              router.push("/my-orders");
+            } else {
+              alert("Payment successful, but some orders failed to create. Please contact support.");
+            }
           } catch (error) {
             console.error("Error creating orders:", error);
             alert("Payment successful, but order creation failed. Please contact support.");
@@ -179,7 +215,7 @@ export default function CartPage() {
               <AnimatePresence>
                 {cart.map((item) => (
                   <motion.div
-                    key={item._id}
+                    key={item.itemId}
                     className="flex flex-col md:flex-row items-center justify-between p-6 bg-gray-800 rounded-lg shadow-lg"
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -188,7 +224,7 @@ export default function CartPage() {
                   >
                     <div className="flex items-center space-x-6">
                       <img
-                        src={`data:${item.contentType};base64,${item.image}`}
+                        src={getMainImageUrl(item)}
                         alt={item.name}
                         className="w-20 h-20 rounded-lg object-cover"
                         onError={(e) => {
@@ -198,6 +234,7 @@ export default function CartPage() {
                       <div>
                         <h2 className="text-xl font-semibold">{item.name}</h2>
                         <p className="text-gray-300">₹{item.price}</p>
+                        <p className="text-gray-400 text-sm">Size: {item.size}</p>
                       </div>
                     </div>
                     <div className="flex items-center space-x-4 mt-4 md:mt-0">
@@ -205,11 +242,11 @@ export default function CartPage() {
                         type="number"
                         min="1"
                         value={item.quantity}
-                        onChange={(e) => updateQuantity(item._id, parseInt(e.target.value))}
+                        onChange={(e) => updateQuantity(item.itemId, parseInt(e.target.value))}
                         className="w-16 p-2 bg-gray-700 text-white rounded-lg text-center"
                       />
                       <button
-                        onClick={() => removeFromCart(item._id)}
+                        onClick={() => removeFromCart(item.itemId)}
                         className="text-red-500 hover:text-red-600 transition-colors"
                       >
                         Remove

@@ -1,6 +1,9 @@
 'use client';
 import { useParams } from 'next/navigation';
-import { useEffect, useState } from 'react';
+// import { useEffect } from 'react';
+import React, { useState, useEffect } from "react";
+import { motion } from "framer-motion";
+import { getMainImageUrl } from "@/lib/imageUtils";
 
 export default function OrderDetailsPage() {
   const { orderId } = useParams();
@@ -133,7 +136,7 @@ export default function OrderDetailsPage() {
               <h2 className="text-xl font-semibold mb-4">Product Details</h2>
               <div className="flex items-start gap-6">
                 <img
-                  src={`data:${order.contentType};base64,${order.itemImage}`}
+                  src={getMainImageUrl(order)}
                   alt={order.productName}
                   className="w-32 h-32 rounded-lg object-cover"
                 />

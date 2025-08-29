@@ -2,6 +2,8 @@
 import React, { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import ProductCard from "@/components/ProductCard";
+import { motion } from "framer-motion";
+import { getMainImageUrl } from "@/lib/imageUtils";
 
 // Wrap the main component in Suspense
 export default function SearchPage() {
@@ -51,9 +53,9 @@ function SearchResults() {
           >
             <ProductCard
               id={product.itemId}
-              title={product.name}
+              name={product.name}
               price={product.price}
-              imageUrl={`data:${product.contentType};base64,${product.image}`}
+              imageUrl={getMainImageUrl(product)}
             />
           </div>
         ))}

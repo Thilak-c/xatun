@@ -1,5 +1,6 @@
 "use client";
 import React, { useEffect, useState } from "react";
+import { getMainImageUrl } from "@/lib/imageUtils";
 
 export default function PaymentHistoryPage() {
     const [paymentHistory, setPaymentHistory] = useState([]);
@@ -22,7 +23,7 @@ export default function PaymentHistoryPage() {
                                 <div className="flex items-center space-x-6">
                                     {/* Item Image */}
                                     <img
-                                        src={`data:image/png;base64,${payment.itemImage}`} // Adjust the MIME type if needed
+                                        src={getMainImageUrl({ image: payment.itemImage, contentType: 'image/png' })}
                                         alt={payment.productName}
                                         className="w-20 h-20 rounded-lg object-cover"
                                     />

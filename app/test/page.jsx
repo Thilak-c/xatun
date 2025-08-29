@@ -1,8 +1,9 @@
 "use client";
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import ProductCard from "@/components/ProductCard";
 import Carousel from "@/components/Carousel";
+import { getMainImageUrl } from "@/lib/imageUtils";
 
 export default function FearlessSoulPage() {
   const [selectedIndex, setSelectedIndex] = useState(null);
@@ -101,9 +102,9 @@ export default function FearlessSoulPage() {
           {products.map((product) => (
             <div key={product._id} className="w-full transform transition-transform duration-300 hover:scale-105">
               <ProductCard
-                title={product.name}
+                name={product.name}
                 price={product.price}
-                imageUrl={`data:${product.contentType};base64,${product.image}`}
+                imageUrl={getMainImageUrl(product)}
               />
             </div>
           ))}

@@ -18,18 +18,25 @@ export async function GET(request, { params }) {
     const db = client.db('xatun');
     const collection = db.collection('products');
 
-    // Find the image by ID
-    const image = await collection.findOne({ _id: new ObjectId(id) });
+    // Find the product by ID
+    const product = await collection.findOne({ _id: new ObjectId(id) });
 
-    if (!image) {
-      return NextResponse.json({ error: 'Image not found' }, { status: 404 });
+    if (!product) {
+      return NextResponse.json({ error: 'Product not found' }, { status: 404 });
     }
 
-    return NextResponse.json(image);
+    // Transform the data to include proper image URLs
+    const transformedProduct = {
+      ...product,
+      mainImage: product.mainImage || product.image, // Handle legacy data
+      additionalImages: product.additionalImages || []
+    };
+
+    return NextResponse.json(transformedProduct);
   } catch (error) {
-    console.error('Error fetching image:', error);
+    console.error('Error fetching product:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch image' },
+      { error: 'Failed to fetch product' },
       { status: 500 }
     );
   }

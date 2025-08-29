@@ -1,66 +1,50 @@
-"use client";
-import { motion } from "framer-motion";
-import { useState, useEffect } from "react";
-import { FaStar } from "react-icons/fa"; // Import the star icon from react-icons
+import Image from "next/image";
+import Link from "next/link";
+import { Poppins, Inter } from "next/font/google";
 
-const ProductCard = ({ title, price, id, imageUrl }) => {
-  const [averageRating, setAverageRating] = useState(0);
-  const [totalRatings, setTotalRatings] = useState(0);
+const poppins = Poppins({
+  subsets: ["latin"],
+  weight: ["500", "600", "700"],
+});
 
-  useEffect(() => {
-    async function fetchData() {
-      try {
-        const productResponse = await fetch(`/api/products/${id}`);
-        if (!productResponse.ok) {
-          throw new Error("Failed to fetch product data");
-        }
-        const productData = await productResponse.json();
-        setAverageRating(productData.averageRating || 0);
+const inter = Inter({
+  subsets: ["latin"],
+  weight: ["400", "500"],
+});
 
-        if (productData.ratings && Array.isArray(productData.ratings)) {
-          setTotalRatings(productData.ratings.length);
-        }
-      } catch (error) {
-        console.error("Error fetching data:", error);
-      }
-    }
-
-    fetchData();
-  }, [id]);
-
+export default function ProductCard({ imageUrl, name, category, price, productId, className = "" }) {
   return (
-    <div className="mb-10 relative h-[280px] hover:scale-125 transition-all delay-150 max-w-sm w-[180px] bg-blue-800 bg-opacity-15 rounded-lg shadow-blue-700 shadow-xl overflow-hidden">
-      <motion.div
-        className="rounded-lg flex items-center justify-center cursor-pointer"
-        whileHover={{
-          scale: 1.25,
-          rotate: 5,
-          boxShadow: "0px 8px 20px rgba(0, 0, 0, 0.2)",
-        }}
-        transition={{
-          duration: 0.4,
-          type: "spring",
-          stiffness: 150,
-        }}
+    <Link href={`/product/${productId}`} className="block">
+      <div
+        className={`flex-shrink-0 w-[180px] md:w-[200px] lg:w-[250px]
+        bg-black bg-opacity-50 rounded-xl overflow-hidden  group flex flex-col cursor-pointer  transition- duration-300 ${className}`}
       >
-        <motion.img
-          src={imageUrl}
-          initial={{ opacity: 0, y: 50 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1 }}
-          alt={title}
-          className="h-[200px] bg-opacity-0 delay-100 bg-slate-50 flex justify-center w-[200px]  rounded-lg object-cover"
-        />
-      </motion.div>
-      <div>
-
-        <div className=" items-center justify-between relative m-4">
-          <h2 className="text-base justify-between items-center text-[12px]  text-white font-thin">{title}</h2>
-          <h2></h2>
+        <div className="relative rounded-t-xl w-full aspect-[3/4] bg-gray-100 overflow-hidden">
+          <Image
+            src={imageUrl}
+            alt={name}
+            fill
+            className="object-cover object-top transition-transform duration-500 ease-out group-hover:scale-110"
+          />
+        </div>
+        <div className="p-2 sm:p-3 flex flex-col gap-1 sm:gap-1">
+        <div
+          className={`${poppins.className} font-normal md:font-semibold border-b border-gray-200 pb-1 sm:pb-1 text-white text-[12px] sm:text-[14px] leading-snug line-clamp-2`}
+        >
+          {name}
+        </div>
+        <div
+          className={`${inter.className} text-[10px] sm:text-[11px] font-light text-gray-300`}
+        >
+          {category}
+        </div>
+        <div
+          className={`${poppins.className} text-[12px] sm:text-[14px] text-white font-semibold md:font-bold`}
+        >
+          ₹ {price}
         </div>
       </div>
-    </div>
+      </div>
+    </Link>
   );
-};
-
-export default ProductCard;
+}

@@ -2,7 +2,7 @@ import { MongoClient } from 'mongodb';
 
 // GET: Fetch all messages for an order
 export async function GET(request, { params }) {
-  const { orderId } = params;
+  const { orderId } = await params;
   const uri = "mongodb://localhost:27017/xatun";
   const client = new MongoClient(uri);
 

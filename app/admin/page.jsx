@@ -2,8 +2,11 @@
 
 import { useSession, signOut } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+// import { useEffect } from 'react';
 import Link from 'next/link';
+import React, { useState, useEffect } from "react";
+import { motion } from "framer-motion";
+import { getMainImageUrl } from "@/lib/imageUtils";
 
 export default function AdminPage() {
   const { data: session, status } = useSession();
@@ -154,7 +157,7 @@ export default function AdminPage() {
             <div key={order.orderId} className="bg-gray-800 rounded-lg p-4 shadow-md">
               <div className="flex items-center space-x-4">
                 <img
-                  src={`data:${order.contentType};base64,${order.itemImage}`}
+                  src={getMainImageUrl(order)}
                   alt={order.productName}
                   className="h-12 w-12 rounded-md"
                 />
@@ -223,7 +226,7 @@ export default function AdminPage() {
                 <tr key={order.orderId} className="hover:bg-gray-750 transition-colors">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <img
-                      src={`data:${order.contentType};base64,${order.itemImage}`}
+                      src={getMainImageUrl(order)}
                       alt={order.productName}
                       className="h-12 w-12 rounded-md"
                     />

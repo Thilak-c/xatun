@@ -1,9 +1,11 @@
 "use client";
 import React, { useEffect, useState } from "react";
+import { motion } from "framer-motion";
 import ProductCard from "@/components/ProductCard";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
 import { useParams, useRouter } from "next/navigation";
+import { getMainImageUrl } from "@/lib/imageUtils";
 
 export default function CategoryPage() {
   const router = useRouter();
@@ -102,9 +104,9 @@ export default function CategoryPage() {
                     >
                       <ProductCard
                         id={product.itemId}
-                        title={product.name}
+                        name={product.name}
                         price={product.price}
-                        imageUrl={`data:${product.contentType};base64,${product.image}`}
+                        imageUrl={getMainImageUrl(product)}
                       />
                     </div>
                   ))}

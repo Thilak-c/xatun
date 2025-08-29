@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { nanoid } from "nanoid";
+import { validateImageFile, validateMultipleImages, formatFileSize } from "@/lib/imageUtils";
 
 export default function UploadPage() {
   const [itemId, setItemId] = useState(nanoid(5)); // Generate on component load
@@ -62,19 +63,36 @@ export default function UploadPage() {
   const handleMainFileChange = (e) => {
     const selectedFile = e.target.files[0];
     if (selectedFile) {
+      // Use utility function for validation
+      const validation = validateImageFile(selectedFile);
+      if (!validation.success) {
+        setMessage(validation.error);
+        return;
+      }
+
       setMainFile(selectedFile);
       setMainImagePreview(URL.createObjectURL(selectedFile));
+      setMessage(""); // Clear any previous error messages
     }
   };
 
   const handleAdditionalFilesChange = (e) => {
     const selectedFiles = Array.from(e.target.files);
-    if (selectedFiles.length > 0) {
-      setAdditionalFiles((prev) => [...prev, ...selectedFiles]);
+    
+    // Use utility function for multiple image validation
+    const validation = validateMultipleImages(selectedFiles);
+    
+    if (validation.hasErrors) {
+      setMessage(validation.errors.join('\n'));
+    }
+
+    if (validation.validFiles.length > 0) {
+      setAdditionalFiles((prev) => [...prev, ...validation.validFiles]);
       setAdditionalImagePreviews((prev) => [
         ...prev,
-        ...selectedFiles.map((file) => URL.createObjectURL(file)),
+        ...validation.validFiles.map((file) => URL.createObjectURL(file))
       ]);
+      setMessage(""); // Clear any previous error messages
     }
   };
 
@@ -114,32 +132,26 @@ export default function UploadPage() {
     }
 
     try {
-      // Convert main image to Base64
-      const mainBase64Image = await fileToBase64(mainFile);
+      // Create FormData for file upload
+      const formData = new FormData();
+      formData.append('itemId', itemId);
+      formData.append('name', itemName);
+      formData.append('price', itemPrice);
+      formData.append('description', itemDescription);
+      formData.append('category', selectedCategory);
+      formData.append('type', selectedType);
+      formData.append('sizes', JSON.stringify(sizes));
+      formData.append('mainImage', mainFile);
 
-      // Convert additional images to Base64
-      const additionalBase64Images = await Promise.all(
-        additionalFiles.map((file) => fileToBase64(file))
-      );
+      // Add additional images
+      additionalFiles.forEach((file) => {
+        formData.append('additionalImages', file);
+      });
 
       // Send data to API
       const response = await fetch("/api/upload", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          itemId,
-          name: itemName,
-          price: Number(itemPrice),
-          image: mainBase64Image,
-          contentType: mainFile.type,
-          additionalImages: additionalBase64Images,
-          description: itemDescription,
-          category: selectedCategory,
-          type: selectedType,
-          sizes, // Include sizes with stock
-        }),
+        body: formData, // Send FormData instead of JSON
       });
 
       const result = await response.json();
@@ -165,15 +177,6 @@ export default function UploadPage() {
     } finally {
       setLoading(false);
     }
-  };
-
-  const fileToBase64 = (file) => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = () => resolve(reader.result.split(",")[1]);
-      reader.onerror = reject;
-    });
   };
 
   return (
@@ -223,7 +226,7 @@ export default function UploadPage() {
             type="text"
             value={itemDescription}
             onChange={(e) => setItemDescription(e.target.value)}
-            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-white bg-opacity-15 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="mt-1 block w-full px-3 py-2 border border-gray-300 bg-white bg-opacity-15 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             required
           />
         </div>
@@ -312,11 +315,17 @@ export default function UploadPage() {
           <label className="block text-sm font-medium text-gray-300">Main Product Image</label>
           <input
             type="file"
-            accept="image/*"
+            accept="image/jpeg,image/jpg,image/png,image/webp"
             onChange={handleMainFileChange}
             className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
             required
           />
+          <p className="text-xs text-gray-400 mt-1">Max size: 5MB. Supported formats: JPEG, PNG, WebP</p>
+          {mainFile && (
+            <p className="text-xs text-gray-300 mt-1">
+              Selected: {mainFile.name} ({formatFileSize(mainFile.size)})
+            </p>
+          )}
           {mainImagePreview && (
             <div className="mt-4 flex justify-center">
               <img src={mainImagePreview} alt="Main Preview" className="max-h-32 rounded-lg shadow-md" />
@@ -329,11 +338,17 @@ export default function UploadPage() {
           <label className="block text-sm font-medium text-gray-300">Additional Product Images</label>
           <input
             type="file"
-            accept="image/*"
+            accept="image/jpeg,image/jpg,image/png,image/webp"
             multiple
             onChange={handleAdditionalFilesChange}
             className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100"
           />
+          <p className="text-xs text-gray-400 mt-1">Max size: 5MB each. Supported formats: JPEG, PNG, WebP</p>
+          {additionalFiles.length > 0 && (
+            <p className="text-xs text-gray-300 mt-1">
+              Selected: {additionalFiles.length} file(s) - Total: {formatFileSize(additionalFiles.reduce((sum, file) => sum + file.size, 0))}
+            </p>
+          )}
           {/* Preview additional images */}
           <div className="mt-4 grid grid-cols-3 gap-2">
             {additionalImagePreviews.map((preview, index) => (
@@ -361,7 +376,15 @@ export default function UploadPage() {
         </button>
 
         {/* Message */}
-        {message && <p className={`mt-4 text-center ${message.includes("successfully") ? "text-green-600" : "text-red-600"}`}>{message}</p>}
+        {message && (
+          <div className={`mt-4 p-3 rounded-md ${
+            message.includes("successfully") 
+              ? "bg-green-100 text-green-800 border border-green-200" 
+              : "bg-red-100 text-red-800 border border-red-200"
+          }`}>
+            <p className="text-sm whitespace-pre-line">{message}</p>
+          </div>
+        )}
       </form>
     </div>
   );

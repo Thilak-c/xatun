@@ -1,5 +1,7 @@
 "use client";
+import React from "react";
 import { motion } from "framer-motion";
+import { getMainImageUrl } from "@/lib/imageUtils";
 
 export default function Carousel({ products, selectedIndex, setSelectedIndex, distance }) {
   return (
@@ -26,10 +28,9 @@ export default function Carousel({ products, selectedIndex, setSelectedIndex, di
             style={{ transformOrigin: "center center" }}
           >
             <img
-              src={`data:${product.contentType};base64,${product.image}`}
+              src={getMainImageUrl(product)}
               alt={product.name}
-              className="w-full h-full object-contain"
-              loading="lazy"
+              className="w-full h-full object-cover rounded-lg"
             />
           </motion.div>
         );

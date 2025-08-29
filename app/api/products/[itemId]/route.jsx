@@ -5,7 +5,7 @@ import clientPromise from "@/lib/mongodb";
 
 export async function GET(request, { params }) {
     try {
-        const { itemId } = params;
+        const { itemId } = await params;
 
         // Connect to MongoDB
         const client = await clientPromise;

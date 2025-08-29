@@ -1,4 +1,4 @@
-import { Geist, Geist_Mono } from "next/font/google";
+import { Inter, Poppins } from 'next/font/google';
 import "./globals.css";
 import Footer from "@/components/footer";
 import { Navbar } from "@/components/Navbar.jsx";
@@ -6,40 +6,46 @@ import { Navbar } from "@/components/Navbar.jsx";
 import Providers from './providers';
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { LoadingProvider } from "@/contexts/LoadingContext";
+import LoadingSpinner from "@/components/LoadingSpinner";
+import ContentWrapper from "@/components/ContentWrapper";
+import LoadingOverride from "@/components/LoadingOverride";
 
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
+// Font configurations
+const inter = Inter({ 
+  subsets: ['latin'],
+  variable: '--font-inter',
+  display: 'swap',
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+const poppins = Poppins({ 
+  subsets: ['latin'],
+  weight: ['100', '200', '300', '400', '500', '600', '700', '800', '900'],
+  variable: '--font-poppins',
+  display: 'swap',
 });
 
 export const metadata = {
-  title: "Xatun – Where Fashion Meets Fantasy",
-  description: "Step into the enchanting world of Xatun, where ancient legends meet modern design. Inspired by the mythical realm of Xatun, our clothing brand offers one-of-a-kind, fantasy-inspired apparel that blends timeless aesthetics with contemporary trends. From intricately designed capes to rugged, earthy textures, each piece is crafted to tell a story and empower you to embrace your individuality.",
+  title: 'XATUN',
+  description: 'Your trusted online shopping destination',
 };
 
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <head>
-
-      <link rel="icon" type="image/x-icon" href="/favicon.ico"></link>
-      </head>
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        <Providers>
-
-          <Navbar />
-          {children}
-          <ToastContainer />
-          <Footer/>
-        </Providers>
+      <body className={`${inter.variable} ${poppins.variable} font-sans antialiased`}>
+        <LoadingProvider>
+          <Providers>
+            <LoadingSpinner />
+            <ContentWrapper>
+              <Navbar />
+              {children}
+              <ToastContainer />
+              <Footer />
+            </ContentWrapper>
+          </Providers>
+          {/* <LoadingOverride /> */}
+        </LoadingProvider>
       </body>
     </html>
   );
